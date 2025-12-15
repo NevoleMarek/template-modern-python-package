@@ -1,0 +1,58 @@
+[project]
+name = "{{cookiecutter.project_slug}}"
+version = "1.0.0"
+description = ""
+readme = "README.md"
+requires-python = "=={{cookiecutter.python_version}}.*"
+authors = [{ name = "NevoleMarek", email = "nevole.marek@gmail.com" }]
+dependencies = []
+
+[dependency-groups]
+dev = [
+  "pytest",
+  "ruff",
+  "ty",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/{{cookiecutter.package_name}}"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+lint.select = [
+    "E",      # pycodestyle errors
+    "F",      # Pyflakes
+    "N",      # pep8-naming
+    "W",      # pycodestyle warnings
+    "I001",   # isort - unsorted imports
+    "ANN",    # flake8-annotations
+    "RET",    # flake8-return
+    "ERA",    # eradicate - commented out code
+    "ASYNC",  # flake8-async
+    "DTZ",    # flake8-datetimez
+    "T20",    # flake8-print
+    "PTH",    # flake8-use-pathlib
+    "UP",     # pyupgrade
+    "PT"      # flake8-pytest
+]
+lint.ignore = [
+    "ANN002",  # Missing type annotation for *args
+    "ANN003"   # Missing type annotation for **kwargs
+]
+src = ["src"]
+
+[tool.ruff.format]
+quote-style = "single"
+line-ending = "lf"
+indent-style = "space"
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["E402", "F401"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+required-version = ">=0.9.0"
