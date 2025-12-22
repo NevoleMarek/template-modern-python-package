@@ -4,7 +4,7 @@ version = "1.0.0"
 description = ""
 readme = "README.md"
 requires-python = "=={{cookiecutter.python_version}}.*"
-authors = [{ name = "NevoleMarek", email = "nevole.marek@gmail.com" }]
+authors = [{ name = "{{cookiecutter.author_name}}", email = "{{cookiecutter.author_email}}" }]
 dependencies = []
 
 [dependency-groups]
