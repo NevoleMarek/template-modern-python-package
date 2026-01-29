@@ -11,7 +11,7 @@ dependencies = []
 dev = [
   "pytest",
   "ruff",
-{%- if cookiecutter.use_ty == "yes" %}
+{%- if cookiecutter.use_ty %}
   "ty",
 {%- endif %}
 ]
@@ -23,7 +23,7 @@ packages = ["src/{{cookiecutter.package_name}}"]
 line-length = 100
 target-version = "py{{cookiecutter.python_version|replace('.', '')}}"
 lint.select = [
-{%- if cookiecutter.linter_rules_core == "yes" %}
+{%- if cookiecutter.linter_rules_core %}
     "E",      # pycodestyle errors
     "F",      # Pyflakes
     "N",      # pep8-naming
@@ -31,31 +31,31 @@ lint.select = [
     "PLE",    # pylint errors
     "PLC",    # pylint conventions
 {%- endif %}
-{%- if cookiecutter.linter_rules_imports == "yes" %}
+{%- if cookiecutter.linter_rules_imports %}
     "I001",   # isort - unsorted imports
 {%- endif %}
-{%- if cookiecutter.linter_rules_typing == "yes" %}
+{%- if cookiecutter.linter_rules_typing %}
     "ANN",    # flake8-annotations
 {%- endif %}
-{%- if cookiecutter.linter_rules_modernization == "yes" %}
+{%- if cookiecutter.linter_rules_modernization %}
     "UP",     # pyupgrade
     "PTH",    # flake8-use-pathlib
 {%- endif %}
-{%- if cookiecutter.linter_rules_testing == "yes" %}
+{%- if cookiecutter.linter_rules_testing %}
     "PT",     # flake8-pytest
 {%- endif %}
-{%- if cookiecutter.linter_rules_cleanup == "yes" %}
+{%- if cookiecutter.linter_rules_cleanup %}
     "ERA",    # eradicate - commented out code
     "T20",    # flake8-print
 {%- endif %}
-{%- if cookiecutter.linter_rules_practices == "yes" %}
+{%- if cookiecutter.linter_rules_practices %}
     "RET",    # flake8-return
     "ASYNC",  # flake8-async
     "DTZ",    # flake8-datetimez
 {%- endif %}
 ]
 lint.ignore = [
-{%- if cookiecutter.linter_rules_typing == "yes" %}
+{%- if cookiecutter.linter_rules_typing %}
     "ANN002",  # Missing type annotation for *args
     "ANN003"   # Missing type annotation for **kwargs
 {%- endif %}
