@@ -1,0 +1,56 @@
+name: Docs
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: docs-{% raw %}${{ github.ref }}{% endraw %}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "{{cookiecutter.python_version}}"
+          enable-cache: true
+          cache-python: true
+
+      - name: Install dependencies
+        run: uv sync --group dev --group docs
+
+      - name: Build docs
+        run: uv run mkdocs build --strict
+
+      - name: Upload GitHub Pages artifact
+        if: "{% raw %}${{ github.event_name != 'pull_request' }}{% endraw %}"
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+  deploy:
+    if: "{% raw %}${{ github.event_name != 'pull_request' }}{% endraw %}"
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: "{% raw %}${{ steps.deployment.outputs.page_url }}{% endraw %}"
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -13,6 +13,8 @@
   "linter_rules_cleanup": true,
   "linter_rules_practices": true,
   "use_ty": true,
+  "include_docs": true,
+  "include_github_workflows": true,
   "__prompts__": {
 
     "python_version": "Select Python version. Provide only major.minor, e.g., 3.13, 3.12, 3.11 - no patch version)",
@@ -23,7 +25,9 @@
     "linter_rules_testing": "Enable testing linting rules? (Testing best practices: flake8-pytest)",
     "linter_rules_cleanup": "Enable cleanup linting rules? (Remove dead code and debug statements: eradicate, flake8-print)",
     "linter_rules_practices": "Enable best practices linting rules? (Code quality: flake8-return, flake8-async, flake8-datetimez)",
-    "use_ty": "Include ty for type checking? (Type checker: ty)"
+    "use_ty": "Include ty for type checking? (Type checker: ty)",
+    "include_docs": "Include documentation setup? (MkDocs config, docs pages, docs workflow)",
+    "include_github_workflows": "Include GitHub Actions workflows? (CI and PR title validation)"
   }
 }
 

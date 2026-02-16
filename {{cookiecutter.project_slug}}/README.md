@@ -52,3 +52,22 @@ uv run ty check
 ```
 {%- endif %}
 
+{%- if cookiecutter.include_docs %}
+### Documentation
+
+This project uses MkDocs with the Material theme.
+
+```bash
+# Install docs tooling
+uv sync --group docs
+# Serve docs locally
+uv run mkdocs serve
+# Build docs
+uv run mkdocs build --strict
+```
+
+{%- if cookiecutter.include_github_workflows %}
+Documentation is validated and deployed by `.github/workflows/docs.yml`.
+{%- endif %}
+{%- endif %}
+
