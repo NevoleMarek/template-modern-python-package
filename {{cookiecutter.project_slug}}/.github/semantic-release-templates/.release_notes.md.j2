@@ -1,0 +1,50 @@
+{% raw %}{# Release notes for the current version only. #}
+{%- set release_elements = release["elements"] if release is defined and "elements" in release else {} -%}
+{%- set type_groups = {
+  "Changes": ["feat", "feature", "features", "fix", "bug fix", "bug fixes"],
+  "Performance": ["perf", "performance", "performance improvements"],
+  "Refactors": ["refactor", "refactoring"],
+  "Docs": ["docs", "documentation"],
+  "Tests": ["test", "testing"],
+  "Chore": ["chore", "chores", "build", "build system", "ci", "continuous integration", "style", "code style"]
+} -%}
+{%- set ns = namespace(lines=[], authors=[]) -%}
+{%- set _ = ns.lines.append("## " ~ version) -%}
+{%- for group_title, types in type_groups.items() -%}
+  {%- set group_commits = [] -%}
+  {%- for commit_type in types -%}
+    {%- for commit in release_elements.get(commit_type, []) -%}
+      {%- set _ = group_commits.append(commit) -%}
+    {%- endfor -%}
+  {%- endfor -%}
+  {%- if group_commits -%}
+    {%- set _ = ns.lines.append("") -%}
+    {%- set _ = ns.lines.append("### " ~ group_title) -%}
+    {%- for commit in group_commits -%}
+      {%- set pr_url = commit.linked_merge_request | pull_request_url -%}
+      {%- set pr_title = commit.descriptions[0] if commit.descriptions else commit.commit.message.split("\n")[0] -%}
+      {%- if commit.linked_merge_request -%}
+        {%- if pr_url -%}
+          {%- set pr_suffix = " ([#" ~ commit.linked_merge_request ~ "](" ~ pr_url ~ "))" -%}
+        {%- else -%}
+          {%- set pr_suffix = " (#" ~ commit.linked_merge_request ~ ")" -%}
+        {%- endif -%}
+      {%- else -%}
+        {%- set pr_suffix = "" -%}
+      {%- endif -%}
+      {%- set _ = ns.lines.append("- " ~ pr_title ~ pr_suffix) -%}
+      {%- set author_name = commit.commit.author.name -%}
+      {%- if author_name and author_name not in ns.authors -%}
+        {%- set _ = ns.authors.append(author_name) -%}
+      {%- endif -%}
+    {%- endfor -%}
+  {%- endif -%}
+{%- endfor -%}
+{%- if ns.authors -%}
+  {%- set _ = ns.lines.append("") -%}
+  {%- set _ = ns.lines.append("### Authors") -%}
+  {%- for author in ns.authors -%}
+    {%- set _ = ns.lines.append("- " ~ author) -%}
+  {%- endfor -%}
+{%- endif -%}
+{{- ns.lines | join("\n") -}}{% endraw %}

@@ -5,14 +5,23 @@ on:
     branches: [main]
     types: [opened, reopened, edited, synchronize]
 
-permissions:
-  pull-requests: read
+env:
+  CONVCO_VERSION: v0.4.2
 
 jobs:
   validate:
     runs-on: ubuntu-slim
     steps:
-      - name: Validate PR title
-        uses: amannn/action-semantic-pull-request@v6
-        env:
-          GITHUB_TOKEN: {% raw %}${{ secrets.GITHUB_TOKEN }}{% endraw %}
+      - uses: actions/checkout@v6
+      - name: Install convco
+        run: |
+          curl -sSfL "https://github.com/convco/convco/releases/download/{% raw %}${{ env.CONVCO_VERSION }}{% endraw %}/convco-ubuntu.zip" \
+            | zcat \
+            > /usr/local/bin/convco
+          chmod +x /usr/local/bin/convco
+      - name: Check PR Title is Conventional
+        run: |
+          echo "{% raw %}${{ github.event.pull_request.title }}{% endraw %}" \
+            | convco check \
+              --from-stdin \
+              --config .github/versionrc

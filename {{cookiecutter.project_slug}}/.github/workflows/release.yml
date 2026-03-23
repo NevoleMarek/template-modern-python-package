@@ -1,0 +1,186 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: Commit SHA to release (defaults to latest on main)
+        required: false
+        type: string
+      dry-run:
+        description: Build artifacts but skip publishing and GitHub release
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: release-{% raw %}${{ inputs.sha || github.ref_name }}{% endraw %}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      released: {% raw %}${{ steps.outputs.outputs.released }}{% endraw %}
+      version: {% raw %}${{ steps.outputs.outputs.version }}{% endraw %}
+      tag: {% raw %}${{ steps.outputs.outputs.tag }}{% endraw %}
+      target_sha: {% raw %}${{ steps.outputs.outputs.target_sha }}{% endraw %}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: {% raw %}${{ inputs.sha }}{% endraw %}
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "{{cookiecutter.python_version}}"
+          enable-cache: true
+          cache-python: true
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Detect release version
+        id: version
+        run: |
+          next_version="$(uv run semantic-release version --print | tr -d '[:space:]')"
+          set +e
+          last_version="$(uv run semantic-release version --print-last-released | tr -d '[:space:]')"
+          status="$?"
+          set -e
+          if [ "$status" -ne 0 ]; then
+            last_version=""
+          fi
+
+          echo "next_version=$next_version" >> "$GITHUB_OUTPUT"
+          echo "last_version=$last_version" >> "$GITHUB_OUTPUT"
+
+          if [ -z "$last_version" ] && [ "$next_version" = "0.0.0" ]; then
+            echo "released=false" >> "$GITHUB_OUTPUT"
+          elif [ -n "$last_version" ] && [ "$next_version" = "$last_version" ]; then
+            echo "released=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "released=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build distribution artifacts
+        if: {% raw %}${{ steps.version.outputs.released == 'true' }}{% endraw %}
+        env:
+          NEXT_VERSION: {% raw %}${{ steps.version.outputs.next_version }}{% endraw %}
+        run: |
+          uv run python - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          pyproject = Path('pyproject.toml')
+          content = pyproject.read_text(encoding='utf-8')
+          updated, substitutions = re.subn(
+              r'(?m)^version = "[^"]+"$',
+              f'version = "{os.environ["NEXT_VERSION"]}"',
+              content,
+              count=1,
+          )
+          if substitutions != 1:
+              msg = 'Failed to update project version in pyproject.toml'
+              raise RuntimeError(msg)
+
+          pyproject.write_text(updated, encoding='utf-8')
+          PY
+          uv build
+
+      - name: Set job outputs
+        id: outputs
+        run: |
+          version='{% raw %}${{ steps.version.outputs.next_version }}{% endraw %}'
+          released='{% raw %}${{ steps.version.outputs.released }}{% endraw %}'
+          target_sha="$(git rev-parse HEAD)"
+
+          echo "released=$released" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+          echo "target_sha=$target_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Upload dist artifact
+        if: {% raw %}${{ steps.outputs.outputs.released == 'true' }}{% endraw %}
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: release
+    if: {% raw %}${{ needs.release.outputs.released == 'true' }}{% endraw %}
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: {% raw %}${{ needs.release.outputs.target_sha }}{% endraw %}
+
+      - name: Download dist artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "{{cookiecutter.python_version}}"
+          enable-cache: true
+          cache-python: true
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Publish to PyPI
+        if: {% raw %}${{ inputs['dry-run'] == false }}{% endraw %}
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist
+
+      - name: Create GitHub release
+        if: {% raw %}${{ inputs['dry-run'] == false }}{% endraw %}
+        env:
+          GH_TOKEN: {% raw %}${{ secrets.GITHUB_TOKEN }}{% endraw %}
+          TAG: {% raw %}${{ needs.release.outputs.tag }}{% endraw %}
+          VERSION: {% raw %}${{ needs.release.outputs.version }}{% endraw %}
+          TARGET_SHA: {% raw %}${{ needs.release.outputs.target_sha }}{% endraw %}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "GitHub release for $TAG already exists, skipping."
+            exit 0
+          fi
+
+          args=("$TAG" --target "$TARGET_SHA" --title "$TAG")
+          if [[ "$VERSION" == *-* ]]; then
+            args+=(--prerelease)
+          fi
+          gh release create "${args[@]}"
+
+      - name: Restore main branch context for semantic-release
+        if: {% raw %}${{ inputs['dry-run'] == false }}{% endraw %}
+        env:
+          TARGET_SHA: {% raw %}${{ needs.release.outputs.target_sha }}{% endraw %}
+        run: git checkout -B main "$TARGET_SHA"
+
+      - name: Publish semantic-release release notes
+        if: {% raw %}${{ inputs['dry-run'] == false }}{% endraw %}
+        env:
+          GH_TOKEN: {% raw %}${{ secrets.GITHUB_TOKEN }}{% endraw %}
+          TAG: {% raw %}${{ needs.release.outputs.tag }}{% endraw %}
+        run: uv run semantic-release changelog --post-to-release-tag "$TAG"
+
+      - name: Dry-run summary
+        if: {% raw %}${{ inputs['dry-run'] == true }}{% endraw %}
+        run: |
+          echo "Dry run enabled - skipping PyPI and GitHub release publication."
