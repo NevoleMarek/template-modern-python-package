@@ -55,6 +55,5 @@ validation:
 
 nav:
   - Home: index.md
-  - Getting Started: getting-started.md
   - API Reference:
       - Overview: reference/index.md
