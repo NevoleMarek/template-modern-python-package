@@ -1,6 +1,6 @@
 [project]
 name = "{{cookiecutter.project_slug}}"
-version = "1.0.0"
+version = "0.0.0"
 description = ""
 readme = "README.md"
 requires-python = "=={{cookiecutter.python_version}}.*"
@@ -13,6 +13,9 @@ dev = [
   "ruff",
 {%- if cookiecutter.use_ty %}
   "ty",
+{%- endif %}
+{%- if cookiecutter.include_release_workflow %}
+  "python-semantic-release>=10.5.3",
 {%- endif %}
 ]
 {%- if cookiecutter.include_docs %}
@@ -88,4 +91,23 @@ required-version = ">=0.9.0"
 {%- if cookiecutter.use_ty %}
 [tool.ty.src]
 exclude=["tests/"]
+{%- endif %}
+
+{%- if cookiecutter.include_release_workflow %}
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+build_command = "uv build"
+tag_format = "v{version}"
+commit_message = "release: version {version}"
+commit_parser = "conventional"
+
+[tool.semantic_release.commit_parser_options]
+minor_tags = ["feat"]
+patch_tags = ["fix"]
+
+[tool.semantic_release.changelog]
+exclude_commit_patterns = [
+  "^release: version .*",
+]
+template_dir = ".github/semantic-release-templates"
 {%- endif %}
