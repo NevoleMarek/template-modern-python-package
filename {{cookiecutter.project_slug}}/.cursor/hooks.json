@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "hooks": {
+    "afterFileEdit": [
+      {
+        "command": ".cursor/hooks/ruff_fix_python.sh"
+      }
+    ],
+    "afterTabFileEdit": [
+      {
+        "command": ".cursor/hooks/ruff_fix_python.sh"
+      }
+    ]
+  }
+}
