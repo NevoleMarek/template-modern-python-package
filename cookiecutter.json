@@ -13,8 +13,12 @@
   "linter_rules_cleanup": true,
   "linter_rules_practices": true,
   "use_ty": true,
+  "include_codeowners": true,
+  "include_contributing_md": true,
   "include_docs": true,
-  "include_github_workflows": true,
+  "include_code_quality_checks": true,
+  "include_pr_title_checks": true,
+  "include_release_workflow": true,
   "__prompts__": {
 
     "python_version": "Select Python version. Provide only major.minor, e.g., 3.13, 3.12, 3.11 - no patch version)",
@@ -26,8 +30,12 @@
     "linter_rules_cleanup": "Enable cleanup linting rules? (Remove dead code and debug statements: eradicate, flake8-print)",
     "linter_rules_practices": "Enable best practices linting rules? (Code quality: flake8-return, flake8-async, flake8-datetimez)",
     "use_ty": "Include ty for type checking? (Type checker: ty)",
+    "include_codeowners": "Include CODEOWNERS? (Creates an empty `.github/CODEOWNERS` file for you to fill in)",
+    "include_contributing_md": "Include CONTRIBUTING.md? (Contributor workflow, PR title and release guidance)",
     "include_docs": "Include documentation setup? (MkDocs config, docs pages, docs workflow)",
-    "include_github_workflows": "Include GitHub Actions workflows? (CI and PR title validation)"
+    "include_code_quality_checks": "Include code quality checks workflow? (GitHub Actions workflow for Ruff, pytest, and ty when enabled)",
+    "include_pr_title_checks": "Require conventional commit titles in PRs? (GitHub Actions PR title validation via .github/versionrc)",
+    "include_release_workflow": "Include release workflow? (GitHub Actions + semantic-release + PyPI trusted publishing)"
   }
 }
 
